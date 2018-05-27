@@ -548,6 +548,17 @@ private[deploy] class Worker(
     case executorStateChanged @ ExecutorStateChanged(appId, execId, state, message, exitStatus) =>
       handleExecutorStateChanged(executorStateChanged)
 
+    case StopWorkerRequest(workerId, host, nodeType, waitForTasksEnd) =>
+      logInfo(s"RemoveWorkerRequest(waitForTasksEnd=$waitForTasksEnd)")
+
+      if(waitForTasksEnd) {
+        // todo: foreach executor send message kill request waitForTasksEnd
+        // todo: each executor should  wait for tasks end and not request task anymore
+        // todo: it should be blocked
+      }
+      onStop()
+      System.exit(12)
+
     case KillExecutor(masterUrl, appId, execId) =>
       if (masterUrl != activeMasterUrl) {
         logWarning("Invalid Master (" + masterUrl + ") attempted to kill executor " + execId)

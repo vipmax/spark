@@ -108,6 +108,10 @@ private[deploy] object DeployMessages {
 
   case class ReconnectWorker(masterUrl: String) extends DeployMessage
 
+  case class StartWorkerRequest(host: String)
+  case class StopWorkerRequest(workerId: String, host: String, nodeType: String,
+                               waitForTasksEnd: Boolean = false)
+
   case class KillExecutor(masterUrl: String, appId: String, execId: Int) extends DeployMessage
 
   case class LaunchExecutor(

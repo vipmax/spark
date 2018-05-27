@@ -35,6 +35,7 @@ import org.apache.spark.util.Utils
  * modified from outside this class.
  */
 @DeveloperApi
+@SerialVersionUID(1000L)
 class BlockManagerId private (
     private var executorId_ : String,
     private var host_ : String,
@@ -105,7 +106,7 @@ class BlockManagerId private (
   }
 }
 
-
+@SerialVersionUID(1000L)
 private[spark] object BlockManagerId {
 
   /**

@@ -28,6 +28,7 @@ object SparkPi {
     val spark = SparkSession
       .builder
       .appName("Spark Pi")
+        .master("spark://127.0.0.1:7077")
       .getOrCreate()
     val slices = if (args.length > 0) args(0).toInt else 2
     val n = math.min(100000L * slices, Int.MaxValue).toInt // avoid overflow

@@ -494,6 +494,12 @@ private[deploy] class Master(
     case KillExecutors(appId, executorIds) =>
       val formattedExecutorIds = formatExecutorIds(executorIds)
       context.reply(handleKillExecutors(appId, formattedExecutorIds))
+
+    case StartWorkerRequest(host) =>
+      startWorker(host, "")
+
+    case StopWorkerRequest(workerId, host, nodeType, waitForTasksEnd) =>
+      stopWorker(workerId, host, nodeType, waitForTasksEnd)
   }
 
   override def onDisconnected(address: RpcAddress): Unit = {
@@ -740,6 +746,49 @@ private[deploy] class Master(
       }
     }
     startExecutorsOnWorkers()
+  }
+
+  private def startWorker(host: String, nodeType: String): Unit = {
+    logInfo("Launching worker " + host)
+
+    import sys.process._
+
+    val sparkMaster = this.rpcEnv.address.host
+    val sparkDir = this.conf.get("spark.home")
+
+    val cmd = s"./sbin/start-slave.sh $sparkMaster"
+
+    val processCmd = s"""ssh $host cd $sparkDir && $cmd"""
+    logInfo(s"Starting Spark Worker, cmd: $processCmd")
+    Process(processCmd).lineStream
+  }
+
+
+  private def stopWorker(workerId: String, host: String, nodeType: String,
+                         waitForTasksEnd: Boolean = false): Unit = {
+    logInfo("Launching worker " + host)
+
+    this.workers.find(_.id == host) match {
+      case None => logInfo(s"Not found ${host} worker")
+      case Some(worker) =>
+        logInfo(s"Removing worker worker.host=${worker.host}")
+        worker.endpoint.send(StopWorkerRequest(workerId, host, nodeType))
+
+        nodeType match {
+          case "aws" =>
+            logInfo(s"Stopping aws host=${worker.host}")
+
+          //  val extraNodes = this.conf.get("spark.extra.nodes", "[192.168.0.66]").replace("[", "")
+//              .replace("]", "").replace("'", "").split(",").filter(_ != "").toList
+//
+//            val instance = AwsInstancesManager.instance(worker.host)
+//
+//            if(!extraNodes.contains(instance.getPublicDnsName)) {
+//              AwsInstancesManager.terminate(instance.getInstanceId)
+//            } else logInfo(s"extraNode ${instance.getPublicDnsName} can not be stopped")
+          case _ =>
+        }
+    }
   }
 
   private def launchExecutor(worker: WorkerInfo, exec: ExecutorDesc): Unit = {

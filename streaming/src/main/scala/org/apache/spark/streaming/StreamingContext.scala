@@ -211,6 +211,14 @@ class StreamingContext private[streaming] (
 
   conf.getOption("spark.streaming.checkpoint.directory").foreach(checkpoint)
 
+
+  if(conf.getBoolean("dynamic", false)) {
+    val dynamicListener = new org.apache.spark.streaming.scheduler.DynamicListener(_batchDur, sc)
+
+    this.addStreamingListener(dynamicListener)
+    sc.addSparkListener(dynamicListener)
+  }
+
   /**
    * Return the associated Spark context
    */
